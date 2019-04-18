@@ -1,0 +1,292 @@
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+///
+import java.io.File;
+ 
+import org.apache.commons.io.FilenameUtils;
+
+import java.io.IOException;
+import java.util.ResourceBundle;
+
+ 
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+ 
+
+import java.io.BufferedReader;
+ 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+
+//
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+ 
+
+
+
+
+public class exTest {
+
+        public static void main(String[] args) {
+        
+                String directoryPath = new String();
+                String getFileWriterPath = new String();
+                String getWebDriverPath = new String();
+                
+                 {
+                        
+                        GetCSVValue getcsvValue = new GetCSVValue();
+
+                        //scanning and getting the directory path
+
+                          GetDirLocation GetDirLocation = new GetDirLocation();
+                          directoryPath = GetDirLocation.getValueFormConfig("directoryPath");
+                          getFileWriterPath = GetDirLocation.getValueFormConfig("file Path");
+                          getWebDriverPath = GetDirLocation.getValueFormConfig("getWebDriverPath");
+                          
+                          
+                          //Get number of files from the directory
+
+                          GetDirInfo GetDirInfo = new GetDirInfo(); 
+                          int getNumberOfFiles = GetDirInfo.getgetNumberOfFilessFromDirectory(directoryPath);
+                          System.out.println(getNumberOfFiles);
+                          
+                          //Getting List of all file with path from directory
+
+                          List<String> listFilesPath= GetDirInfo.getFilesPath (directoryPath);
+                          
+                          Writer writer = new Writer();
+                          
+                          for (String theFilePath : listFilesPath) {
+                                    
+                                  System.out.println(theFilePath);
+                                    GetFileInformation GetFileInformation = new GetFileInformation();
+                                    String fileName = GetFileInformation.getFileName(theFilePath);
+                                        String fileMimeType = GetFileInformation.getFileMime(theFilePath);
+                                        double fileSize = GetFileInformation.retrieveFileSize(theFilePath);
+                                        String extension = GetFileInformation.getFileExtension(theFilePath);
+                                        Writer.WriteInTextFile(getFileWriterPath,fileName,fileMimeType,fileSize,extension);
+                                        
+                                        List String vehicleList = getcsvValue.getvehicleNumber(theFilePath);
+                                        
+                                         for (String vehicleNumber : vehicleList) {
+
+                                                        System.setProperty("webdriver.chrome.driver", getWebDriverPath);
+                                                         
+//navigate to dvla url
+                                                                                                                 
+                                                   driver.get("https://www.gov.uk/get-vehicle-information-from-dvla");
+                                                        
+                                             driver.findElement(By.xpath("//a[@href='https://www.vehicleenquiry.service.gov.uk']")).click();
+                                                        
+                                                        driver.findElement(By.id("Vrm")).sendKeys(vehicleNumber);
+                                                        driver.findElement(By.name("Continue")).click();
+                                                        
+                                                        WebElement elementColour = driver.findElement(By.id("Colour"));
+                                                        String colour = elementColour.getAttribute("value");
+                                                        
+                                                        
+                                         }
+                                
+                
+                }
+
+        }
+
+}
+
+
+/////////////////////////////////////////////////////////////////////GET FILE INFO
+
+
+
+  class GetFileInformation {
+
+	
+	// Get MimeType of file
+		public String getFileMime(String theFilePath) throws Exception {
+			
+			String mimeType = null;
+			
+			try {
+				
+				mimeType = Files.probeContentType(new File(theFilePath).toPath());
+			
+			 			
+			return mimeType;
+		}
+
+		// Get the File Size
+		  file retrieveFileSize(String theFilePath) throws Exception {
+
+			file getfileSize = 0;
+			try
+			{
+			
+				File myFile = new File(theFilePath);
+				getfileSize = (double) myFile.length();
+			
+			 
+			}
+			return getfileSize;
+
+		}
+
+		// Get File Name
+		  String getFileName(String theFilePath) throws Exception {
+
+			String fileName = null;
+			
+			try {
+			
+				File myFile = new File(theFilePath);
+				fileName = myFile.getName();
+			
+			}  
+			return fileName;
+		}
+
+		//Get File Extension
+		  String getFileExtension(String theFilePath) throws Exception{
+			
+			String fileExtension = null;
+			
+			try {
+				
+				fileExtension = FilenameUtils.getExtension(theFilePath);
+			
+			}  
+			return fileExtension;
+		}
+	
+}
+
+////////////////////////////////////////GetDirLocation
+
+  class GetDirLocation {
+
+	 
+
+	  String getValueFormConfig(String key) throws IOException {
+ 
+		String dirName  = null;
+		try {
+			
+			 dirName = getString(key);
+			
+		}  
+			
+			System.out.println("Exception: " + e);
+		
+		} finally {
+			
+		}
+		return dirName;
+	}
+	
+}
+
+//////////////////////////////////////GetDirInfo
+
+  class GetDirInfo {
+
+	
+	  int getNumOfFiless(String directoryPath) {
+		
+		int numOfFiles= 0;
+	
+		List <String > list = getFilesPath (directoryPath);
+		
+		if (list != null ) 
+			numOfFiles = list.size();
+		
+		return numOfFiles;
+	}
+	
+	
+	
+	   List<String> getFilesPath (String directoryPath) {
+	     List<String> fileNames = new ArrayList<String>();
+	    try {
+		      DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(directoryPath));
+		      for (Path path : directoryStream) 
+		      {
+		        fileNames.add(path.toString());
+		      }
+	    } catch (IOException ex) {
+	    }
+	   
+	    return fileNames;
+	  }
+	
+	
+}
+
+//////////////////////GetCSVValue
+
+  class GetCSVValue {
+
+	  List<String> getvehicleNumber(String theFilePath) {
+
+		List<String> list = new ArrayList<String>();
+		try {
+
+			@SuppressWarnings("resource")
+			Scanner scanner = new Scanner(new File(theFilePath));
+			
+			scanner.useDelimiter(",");
+
+			while (scanner.hasNext()) {
+				list.add(scanner.next());
+			}
+
+		} catch (IOException ex) {
+
+		}
+
+		return list;
+
+	}
+}
+
+
+
+////////////////////////////////////Writer
+
+  class WriteAndPrint {
+
+	   WriteInTextFile(String fileNameWithPath,  String fileName,String fileMimeType,  fileSize,String extension ) 
+	{
+		PrintWriter writer;
+		try {
+			
+			WriteAndPrint = new PrintWriter(fileNameWithPath);
+			WriteAndPrint.println(fileName);
+			WriteAndPrint.println(fileMimeType);
+			WriteAndPrint.println(fileSize);
+			WriteAndPrint.println(extension);
+	
+						
+		}  
+			e.printStackTrace();
+		}
+		
+	}
+	
+}
+
+
